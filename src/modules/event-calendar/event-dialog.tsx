@@ -1,24 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { format, isBefore } from "date-fns"
-import { CotinButton, CotinInputAdvanced } from '@cotin/biblioteca-componentes-react';
+import { format, isBefore } from "date-fns";
+import { CotinButton, CotinCheckbox, CotinInputAdvanced, CotinRadio, CotinText, CotinTextArea, CotinTitle } from '@cotin/biblioteca-componentes-react';
 import type { CalendarEvent, EventColor } from "../event-calendar";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "./lib/utils";
 import { Button } from "../ui/button";
 import { Calendar } from "../ui/calendar";
-import { Checkbox } from "../ui/checkbox";
+import DeleteIcon from '@mui/icons-material/Delete';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
 } from "../ui/dialog";
-import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -26,17 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Textarea } from "../ui/textarea";
 import {
   StartHour,
   EndHour,
   DefaultStartHour,
   DefaultEndHour,
 } from "../event-calendar/constants";
-
 import CallEndIcon from "@mui/icons-material/CallEnd";
 import z from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import InputController from "../../core/shared/components/InputController";
 
 interface EventDialogProps {
@@ -47,9 +41,44 @@ interface EventDialogProps {
   onDelete: (eventId: string) => void;
 }
 
+// Função auxiliar movida para fora do componente
+const formatTimeForInput = (date: Date) => {
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = Math.floor(date.getMinutes() / 15) * 15;
+  return `${hours}:${minutes.toString().padStart(2, "0")}`;
+};
+
+// Schema Zod baseado na interface CalendarEvent
 const formSchema = z.object({
-  title: z.string().min(1, "Título é obrigatório")
+  title: z.string().min(1, "Título é obrigatório"),
+  description: z.string().optional(),
+  startDate: z.date(),
+  endDate: z.date(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  allDay: z.boolean(),
+  location: z.string().optional(),
+  color: z.enum(["blue", "orange", "violet", "rose", "emerald"]),
+}).refine((data) => {
+  // Se não for allDay, valida horários
+  if (!data.allDay) {
+    if (!data.startTime || !data.endTime) {
+      return false;
+    }
+  }
+  return true;
+}, {
+  message: "Horários são obrigatórios quando não é dia inteiro",
+  path: ["startTime"],
+}).refine((data) => {
+  // Valida que endDate não é antes de startDate
+  return !isBefore(data.endDate, data.startDate);
+}, {
+  message: "Data de término não pode ser antes da data de início",
+  path: ["endDate"],
 });
+
+type FormData = z.infer<typeof formSchema>;
 
 export function EventDialog({
   event,
@@ -58,80 +87,69 @@ export function EventDialog({
   onSave,
   onDelete,
 }: EventDialogProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [startDate, setStartDate] = useState<Date>(new Date());
-  const [endDate, setEndDate] = useState<Date>(new Date());
-  const [startTime, setStartTime] = useState(`${DefaultStartHour}:00`);
-  const [endTime, setEndTime] = useState(`${DefaultEndHour}:00`);
-  const [allDay, setAllDay] = useState(false);
-  const [location, setLocation] = useState("");
-  const [color, setColor] = useState<EventColor>("blue");
-  const [error, setError] = useState<string | null>(null);
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
-
-  type FormData = z.infer<typeof formSchema>;
 
   const methods = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
+      description: "",
+      startDate: new Date(),
+      endDate: new Date(),
+      startTime: `${DefaultStartHour}:00`,
+      endTime: `${DefaultEndHour}:00`,
+      allDay: false,
+      location: "",
+      color: "blue",
     },
   });
 
   const {
     control,
-    handleSubmit: rhfHandleSubmit,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
     formState: { errors },
   } = methods;
 
-  // Debug log to check what event is being passed
-  useEffect(() => {
-    console.log("EventDialog received event:", event);
-  }, [event]);
+  const allDay = watch("allDay");
+  const startDate = watch("startDate");
+  const endDate = watch("endDate");
 
+  // Atualiza o formulário quando o evento muda
   useEffect(() => {
     if (event) {
-      setTitle(event.title || "");
-      setDescription(event.description || "");
-
       const start = new Date(event.start);
       const end = new Date(event.end);
 
-      setStartDate(start);
-      setEndDate(end);
-      setStartTime(formatTimeForInput(start));
-      setEndTime(formatTimeForInput(end));
-      setAllDay(event.allDay || false);
-      setLocation(event.location || "");
-      setColor((event.color as EventColor) || "sky");
-      setError(null); // Reset error when opening dialog
+      reset({
+        title: event.title || "",
+        description: event.description || "",
+        startDate: start,
+        endDate: end,
+        startTime: formatTimeForInput(start),
+        endTime: formatTimeForInput(end),
+        allDay: event.allDay ?? false,
+        location: event.location || "",
+        color: (event.color as EventColor) || "blue",
+      });
     } else {
-      resetForm();
+      reset({
+        title: "",
+        description: "",
+        startDate: new Date(),
+        endDate: new Date(),
+        startTime: `${DefaultStartHour}:00`,
+        endTime: `${DefaultEndHour}:00`,
+        allDay: false,
+        location: "",
+        color: "blue",
+      });
     }
-  }, [event]);
+  }, [event, reset]);
 
-  const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setStartDate(new Date());
-    setEndDate(new Date());
-    setStartTime(`${DefaultStartHour}:00`);
-    setEndTime(`${DefaultEndHour}:00`);
-    setAllDay(false);
-    setLocation("");
-    setColor("blue");
-    setError(null);
-  };
-
-  const formatTimeForInput = (date: Date) => {
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = Math.floor(date.getMinutes() / 15) * 15;
-    return `${hours}:${minutes.toString().padStart(2, "0")}`;
-  };
-
-  // Memoize time options so they're only calculated once
   const timeOptions = useMemo(() => {
     const options = [];
     for (let hour = StartHour; hour <= EndHour; hour++) {
@@ -139,37 +157,24 @@ export function EventDialog({
         const formattedHour = hour.toString().padStart(2, "0");
         const formattedMinute = minute.toString().padStart(2, "0");
         const value = `${formattedHour}:${formattedMinute}`;
-        // Use a fixed date to avoid unnecessary date object creations
         const date = new Date(2000, 0, 1, hour, minute);
         const label = format(date, "h:mm a");
         options.push({ value, label });
       }
     }
     return options;
-  }, []); // Empty dependency array ensures this only runs once
+  }, []);
 
   const handleSave = (data: FormData) => {
-    console.log("✅ handleSave chamado!", data);
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    console.log("📝 handleSave chamado com:", data);
+    const start = new Date(data.startDate);
+    const end = new Date(data.endDate);
 
-    if (!allDay) {
-      const [startHours = 0, startMinutes = 0] = startTime
+    if (!data.allDay && data.startTime && data.endTime) {
+      const [startHours = 0, startMinutes = 0] = data.startTime
         .split(":")
         .map(Number);
-      const [endHours = 0, endMinutes = 0] = endTime.split(":").map(Number);
-
-      if (
-        startHours < StartHour ||
-        startHours > EndHour ||
-        endHours < StartHour ||
-        endHours > EndHour
-      ) {
-        setError(
-          `Selected time must be between ${StartHour}:00 and ${EndHour}:00`,
-        );
-        return;
-      }
+      const [endHours = 0, endMinutes = 0] = data.endTime.split(":").map(Number);
 
       start.setHours(startHours, startMinutes, 0);
       end.setHours(endHours, endMinutes, 0);
@@ -178,25 +183,17 @@ export function EventDialog({
       end.setHours(23, 59, 59, 999);
     }
 
-    // Validate that end date is not before start date
-    if (isBefore(end, start)) {
-      setError("End date cannot be before start date");
-      return;
-    }
-
-    // Use generic title if empty
-    const eventTitle = data.title.trim() ? data.title : "(no title)";
-
-    onSave({
+    const calendarEvent: CalendarEvent = {
       id: event?.id || "",
-      title: eventTitle,
-      description,
+      title: data.title.trim() || "(no title)",
+      description: data.description,
       start,
       end,
-      allDay,
-      location,
-      color,
-    });
+      allDay: data.allDay,
+      location: data.location,
+      color: data.color,
+    };
+    onSave(calendarEvent);
   };
 
   const handleDelete = () => {
@@ -205,40 +202,45 @@ export function EventDialog({
     }
   };
 
-  // Updated color options to match types.ts
   const colorOptions: Array<{
     value: EventColor;
-    label: string;
+    label: string; // Adicionar esta propriedade
+    color: string;
     bgClass: string;
     borderClass: string;
   }> = [
       {
         value: "blue",
-        label: "Blue",
+        label: "", // Adicionar
+        color: "blue",
         bgClass: "bg-blue-400 data-[state=checked]:bg-blue-400",
         borderClass: "border-blue-400 data-[state=checked]:border-blue-400",
       },
       {
         value: "violet",
-        label: "Violet",
+        label: "", // Adicionar
+        color: "violet",
         bgClass: "bg-violet-400 data-[state=checked]:bg-violet-400",
         borderClass: "border-violet-400 data-[state=checked]:border-violet-400",
       },
       {
         value: "rose",
-        label: "Rose",
+        label: "", // Adicionar
+        color: "#f43f5e",
         bgClass: "bg-rose-400 data-[state=checked]:bg-rose-400",
         borderClass: "border-rose-400 data-[state=checked]:border-rose-400",
       },
       {
         value: "emerald",
-        label: "Emerald",
+        label: "", // Adicionar
+        color: "#10b981",
         bgClass: "bg-emerald-400 data-[state=checked]:bg-emerald-400",
         borderClass: "border-emerald-400 data-[state=checked]:border-emerald-400",
       },
       {
         value: "orange",
-        label: "Orange",
+        label: "", // Adicionar
+        color: "orange",
         bgClass: "bg-orange-400 data-[state=checked]:bg-orange-400",
         borderClass: "border-orange-400 data-[state=checked]:border-orange-400",
       },
@@ -249,24 +251,39 @@ export function EventDialog({
       <DialogContent className="sm:max-w-[425px]">
         <form
           className="flex flex-col gap-4"
-          onSubmit={rhfHandleSubmit(handleSave)}
+          onSubmit={handleSubmit(
+            (data) => {
+              console.log("✅ Formulário válido, dados:", data);
+              handleSave(data);
+            },
+            (errors) => {
+              console.log("❌ Erros de validação:", errors);
+              console.log("Erros detalhados:", JSON.stringify(errors, null, 2));
+            }
+          )}
         >
           <DialogHeader>
-            <DialogTitle>{event?.id ? "Edit Event" : "Create Event"}</DialogTitle>
-            <DialogDescription className="sr-only">
-              {event?.id
-                ? "Edit the details of this event"
-                : "Add a new event to your calendar"}
-            </DialogDescription>
+            <CotinTitle
+              id="event-title"
+              level='h3'
+              children={event?.id ? "Editar Evento" : "Criar Evento"}
+            />
+            <CotinText
+              id="event-description"
+              children={event?.id ?
+                "Editar o detalhes deste evento" :
+                "Adicionar um novo evento ao seu calendário"}
+            />
           </DialogHeader>
-          {error && (
+
+          {errors.root && (
             <div className="bg-destructive/15 text-destructive rounded-md px-3 py-2 text-sm">
-              {error}
+              {errors.root.message}
             </div>
           )}
+
           <div className="grid gap-4 py-4">
             <div className="*:not-first:mt-1.5">
-              <Label htmlFor="title">Title</Label>
               <InputController name="title" control={control}>
                 <CotinInputAdvanced
                   id="title"
@@ -278,13 +295,13 @@ export function EventDialog({
             </div>
 
             <div className="*:not-first:mt-1.5">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-              />
+              <InputController name="description" control={control}>
+                <CotinTextArea
+                  label="Descrição"
+                  id="description"
+                  rows={3}
+                />
+              </InputController>
             </div>
 
             <div className="flex gap-4">
@@ -318,35 +335,49 @@ export function EventDialog({
                       defaultMonth={startDate}
                       onSelect={(date: any) => {
                         if (date) {
-                          setStartDate(date);
-                          // If end date is before the new start date, update it to match the start date
+                          setValue("startDate", date);
                           if (isBefore(endDate, date)) {
-                            setEndDate(date);
+                            setValue("endDate", date);
                           }
-                          setError(null);
                           setStartDateOpen(false);
                         }
                       }}
                     />
                   </PopoverContent>
                 </Popover>
+                {errors.startDate && (
+                  <p className="text-destructive text-sm mt-1">
+                    {errors.startDate.message}
+                  </p>
+                )}
               </div>
 
               {!allDay && (
                 <div className="min-w-28 *:not-first:mt-1.5">
                   <Label htmlFor="start-time">Start Time</Label>
-                  <Select value={startTime} onValueChange={setStartTime}>
-                    <SelectTrigger id="start-time">
-                      <SelectValue placeholder="Select time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timeOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    name="startTime"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger id="start-time">
+                          <SelectValue placeholder="Select time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.startTime && (
+                    <p className="text-destructive text-sm mt-1">
+                      {errors.startTime.message}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -383,99 +414,131 @@ export function EventDialog({
                       disabled={{ before: startDate }}
                       onSelect={(date: any) => {
                         if (date) {
-                          setEndDate(date);
-                          setError(null);
+                          setValue("endDate", date);
                           setEndDateOpen(false);
                         }
                       }}
                     />
                   </PopoverContent>
                 </Popover>
+                {errors.endDate && (
+                  <p className="text-destructive text-sm mt-1">
+                    {errors.endDate.message}
+                  </p>
+                )}
               </div>
 
               {!allDay && (
                 <div className="min-w-28 *:not-first:mt-1.5">
                   <Label htmlFor="end-time">End Time</Label>
-                  <Select value={endTime} onValueChange={setEndTime}>
-                    <SelectTrigger id="end-time">
-                      <SelectValue placeholder="Select time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timeOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    name="endTime"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger id="end-time">
+                          <SelectValue placeholder="Select time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.endTime && (
+                    <p className="text-destructive text-sm mt-1">
+                      {errors.endTime.message}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
 
             <div className="flex items-center gap-2">
-              <Checkbox
-                id="all-day"
-                checked={allDay}
-                onCheckedChange={(checked: any) => setAllDay(checked === true)}
+              <Controller
+                name="allDay"
+                control={control}
+                render={({ field }) => (
+                  <CotinCheckbox
+                    id="allDay"
+                    options={[{ label: "Todos os Dias", value: true }]}
+                    value={field.value ? [true] : []}
+                    onChange={(values) => field.onChange(values.includes(true))}
+                  />
+                )}
               />
-              <Label htmlFor="all-day">All day</Label>
             </div>
 
             <div className="*:not-first:mt-1.5">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-              />
+              <InputController name="location" control={control}>
+                <CotinInputAdvanced
+                  id="location"
+                  label="Local/Link"
+                  placeholder="Local/Link"
+                  errorMessage={errors.location?.message}
+                />
+              </InputController>
             </div>
+
             <fieldset className="space-y-4">
               <legend className="text-foreground text-sm leading-none font-medium">
                 Etiquette
               </legend>
-              <RadioGroup
-                className="flex gap-1.5"
-                defaultValue={colorOptions[0]?.value}
-                value={color}
-                onValueChange={(value: EventColor) => setColor(value)}
-              >
-                {colorOptions.map((colorOption) => (
-                  <RadioGroupItem
-                    key={colorOption.value}
-                    id={`color-${colorOption.value}`}
-                    value={colorOption.value}
-                    aria-label={colorOption.label}
-                    className={cn(
-                      "size-6 shadow-none",
-                      colorOption.bgClass,
-                      colorOption.borderClass,
-                    )}
+              <Controller
+                name="color"
+                control={control}
+                render={({ field }) => (
+                  <CotinRadio
+                    id="color"
+                    options={colorOptions}
+                    value={field.value}
+                    onChange={(val) => {
+                      field.onChange(val as EventColor);
+                    }}
+                    variant="color"
+                    direction="horizontal"
+                    errorMessage={errors.color?.message}
                   />
-                ))}
-              </RadioGroup>
+                )}
+              />
             </fieldset>
           </div>
+
           <DialogFooter className="flex-row sm:justify-between">
             {event?.id && (
-              <Button
-                variant="outline"
-                className="text-destructive hover:text-destructive"
-                size="icon"
-                onClick={handleDelete}
-                aria-label="Delete event"
-              >
-                <CallEndIcon />
-              </Button>
+              <CotinButton
+                id="delete-event"
+                variant="icon"
+                size="default"
+                onClick={handleDelete}>
+                <DeleteIcon sx={{ color: "red" }} />
+              </CotinButton>
+
+              // <Button
+              //   variant="outline"
+              //   className="text-destructive hover:text-destructive"
+              //   size="icon"
+              //   onClick={handleDelete}
+              //   aria-label="Delete event"
+              // >
+              //   <CallEndIcon />
+              // </Button>
             )}
             <div className="flex flex-1 justify-end gap-2">
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <CotinButton variant="default" type="submit" id={"save-event"}>Save</CotinButton>
+              <CotinButton variant="default" id="cancel-event" onClick={onClose}>
+                Cancelar
+              </CotinButton>
+              <CotinButton variant="primary" type="submit" id="save-event">
+                Salvar
+              </CotinButton>
             </div>
           </DialogFooter>
         </form>
       </DialogContent>
-    </Dialog >
+    </Dialog>
   );
 }
