@@ -1,57 +1,23 @@
-import { Route, Routes } from "react-router-dom";
-import Home from "../modules/home/views/Home";
+import { Routes, Route } from "react-router-dom";
+import AppLayout from "./AppLayout";
+import BigCalendar from "../modules/big-calendar";
+import { CalendarProvider } from "../modules/event-calendar/calendar-context";
 
-const AppRoutes: React.FC = () => {
-  // const { isLoggedIn } = useAuth();
-
+const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-
-      {/* <Route
-          path="/autenticacao/login-usuario-externo"
+      <Route element={<AppLayout />}>
+        <Route
+          path="/"
           element={
-            <RestrictedRoute isAuthenticated={isLoggedIn}>
-              <LoginExternoPage />
-            </RestrictedRoute>
+            <CalendarProvider>
+              <div className="flex flex-1 flex-col gap-4 p-2 pt-0">
+                <BigCalendar />
+              </div>
+            </CalendarProvider>
           }
-        /> */}
-
-      {/* <Route
-          path="/gestao-conhecimento/*"
-          element={
-            <ProtectedRoute isAuthenticated={isLoggedIn}>
-              <GestaoConhecimentoLayout />
-            </ProtectedRoute>
-          }
-        /> */}
-
-      {/* <Route
-          path="/sistema-gestao-integrada/*"
-          element={
-            <ProtectedRoute isAuthenticated={isLoggedIn}>
-              <SistemaGestaoIntegradaLayout />
-            </ProtectedRoute>
-          }
-        /> */}
-
-      {/* <Route
-          path="/empresa-terceirizada/*"
-          element={
-            <ProtectedRoute isAuthenticated={isLoggedIn}>
-              <EmpresaTerceirizadaLayout />
-            </ProtectedRoute>
-          }
-        /> */}
-
-      {/* <Route
-          path="/relatorios/*"
-          element={
-            <ProtectedRoute isAuthenticated={isLoggedIn}>
-              <RelatoriosLayout />
-            </ProtectedRoute>
-          }
-        /> */}
+        />
+      </Route>
     </Routes>
   );
 };
