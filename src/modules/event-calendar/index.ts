@@ -23,6 +23,5 @@ export * from "./hooks/use-event-visibility";
 export type {
   CalendarEvent,
   CalendarView,
-  EventColor,
   CalendarViewLabel,
 } from "./types";

@@ -7,7 +7,6 @@ import { useCalendarContext } from "./event-calendar/calendar-context";
 import {
   EventCalendar,
   type CalendarEvent,
-  type EventColor,
 } from "./event-calendar";
 
 // Etiquettes data for calendar filtering
@@ -15,31 +14,31 @@ export const etiquettes = [
   {
     id: "my-events",
     name: "My Events",
-    color: "emerald" as EventColor,
+    color: "#3b82f6",
     isActive: true,
   },
   {
     id: "marketing-team",
     name: "Marketing Team",
-    color: "orange" as EventColor,
+    color: "#67e8f9",
     isActive: true,
   },
   {
     id: "interviews",
     name: "Interviews",
-    color: "violet" as EventColor,
+    color: "#b45309",
     isActive: true,
   },
   {
     id: "events-planning",
     name: "Events Planning",
-    color: "blue" as EventColor,
+    color: "#164e63",
     isActive: true,
   },
   {
     id: "holidays",
     name: "Holidays",
-    color: "rose" as EventColor,
+    color: "#4c1d95",
     isActive: true,
   },
 ];
@@ -70,7 +69,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -13 + daysUntilNextSunday), 11),
       30,
     ),
-    color: "blue",
+    color: "#67e8f9",
     location: "Executive Boardroom",
   },
   {
@@ -85,7 +84,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -13 + daysUntilNextSunday), 15),
       0,
     ),
-    color: "violet",
+    color: "#67e8f9",
     location: "Conference Room A",
   },
   {
@@ -100,7 +99,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -12 + daysUntilNextSunday), 10),
       0,
     ),
-    color: "violet",
+    color: "#67e8f9",
     location: "Innovation Lab",
   },
   {
@@ -115,7 +114,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -12 + daysUntilNextSunday), 14),
       30,
     ),
-    color: "emerald",
+    color: "#67e8f9",
     location: "Client HQ",
   },
   {
@@ -130,7 +129,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -11 + daysUntilNextSunday), 11),
       0,
     ),
-    color: "blue",
+    color: "#67e8f9",
     location: "Finance Room",
   },
   {
@@ -145,7 +144,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -11 + daysUntilNextSunday), 13),
       30,
     ),
-    color: "orange",
+    color: "#67e8f9",
     location: "Bistro Garden",
   },
   {
@@ -160,7 +159,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -10 + daysUntilNextSunday), 12),
       0,
     ),
-    color: "orange",
+    color: "#67e8f9",
     location: "Marketing Suite",
   },
   {
@@ -175,7 +174,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -10 + daysUntilNextSunday), 15),
       0,
     ),
-    color: "violet",
+    color: "#67e8f9",
     location: "HR Office",
   },
   {
@@ -190,7 +189,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -9 + daysUntilNextSunday), 10),
       30,
     ),
-    color: "emerald",
+    color: "#67e8f9",
     location: "Main Auditorium",
   },
   {
@@ -205,7 +204,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -9 + daysUntilNextSunday), 15),
       0,
     ),
-    color: "blue",
+    color: "#67e8f9",
     location: "Demo Room",
   },
   {
@@ -220,7 +219,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -8 + daysUntilNextSunday), 7),
       30,
     ),
-    color: "rose",
+    color: "#67e8f9",
   },
   {
     id: "w1-10",
@@ -234,7 +233,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -8 + daysUntilNextSunday), 10),
       30,
     ),
-    color: "rose",
+    color: "#67e8f9",
   },
   {
     id: "5e",
@@ -248,7 +247,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -7 + daysUntilNextSunday), 13),
       30,
     ),
-    color: "rose",
+    color: "#67e8f9",
   },
   {
     id: "1b",
@@ -262,7 +261,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -6 + daysUntilNextSunday), 8),
       0,
     ),
-    color: "orange",
+    color: "#67e8f9",
     location: "Main Conference Hall",
   },
   {
@@ -277,7 +276,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -6 + daysUntilNextSunday), 11),
       0,
     ),
-    color: "blue",
+    color: "#67e8f9",
     location: "Main Conference Hall",
   },
   {
@@ -292,7 +291,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -6 + daysUntilNextSunday), 16),
       0,
     ),
-    color: "blue",
+    color: "#67e8f9",
     location: "Main Conference Hall",
   },
   {
@@ -307,7 +306,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -5 + daysUntilNextSunday), 9),
       30,
     ),
-    color: "emerald",
+    color: "#67e8f9",
     location: "Main Conference Hall",
   },
   {
@@ -322,7 +321,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -5 + daysUntilNextSunday), 13),
       30,
     ),
-    color: "emerald",
+    color: "#67e8f9",
     location: "Main Conference Hall",
   },
   {
@@ -337,7 +336,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -4 + daysUntilNextSunday), 11),
       30,
     ),
-    color: "orange",
+    color: "#67e8f9",
     location: "Downtown Cafe",
   },
   {
@@ -352,7 +351,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -4 + daysUntilNextSunday), 14),
       0,
     ),
-    color: "violet",
+    color: "#67e8f9",
     location: "Downtown Cafe",
   },
   {
@@ -367,7 +366,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -3 + daysUntilNextSunday), 10),
       45,
     ),
-    color: "violet",
+    color: "#67e8f9",
     location: "Abbey Road Room",
   },
   {
@@ -382,7 +381,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -3 + daysUntilNextSunday), 11),
       30,
     ),
-    color: "violet",
+    color: "#67e8f9",
     location: "Abbey Road Room",
   },
   {
@@ -397,7 +396,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -2 + daysUntilNextSunday), 9),
       45,
     ),
-    color: "blue",
+    color: "#67e8f9",
   },
   {
     id: "5f",
@@ -411,7 +410,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -2 + daysUntilNextSunday), 15),
       30,
     ),
-    color: "orange",
+    color: "#67e8f9",
     location: "Main Conference Hall",
   },
   {
@@ -426,7 +425,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, -1 + daysUntilNextSunday), 7),
       30,
     ),
-    color: "rose",
+    color: "#67e8f9",
   },
   {
     id: "w3-1",
@@ -437,7 +436,7 @@ const sampleEvents: CalendarEvent[] = [
       30,
     ),
     end: setMinutes(setHours(addDays(currentDate, daysUntilNextSunday), 12), 0),
-    color: "blue",
+    color: "#67e8f9",
     location: "Planning Room",
   },
   {
@@ -452,7 +451,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, daysUntilNextSunday + 1), 8),
       30,
     ),
-    color: "violet",
+    color: "#67e8f9",
     location: "Meeting Room B",
   },
   {
@@ -467,7 +466,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, daysUntilNextSunday + 1), 12),
       45,
     ),
-    color: "emerald",
+    color: "#67e8f9",
     location: "Design Studio",
   },
   {
@@ -482,7 +481,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, daysUntilNextSunday + 1), 14),
       30,
     ),
-    color: "orange",
+    color: "#67e8f9",
     location: "Executive Dining Room",
   },
   {
@@ -497,7 +496,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, daysUntilNextSunday + 2), 12),
       30,
     ),
-    color: "blue",
+    color: "#67e8f9",
     location: "Engineering Lab",
   },
   {
@@ -512,7 +511,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, daysUntilNextSunday + 2), 16),
       0,
     ),
-    color: "violet",
+    color: "#67e8f9",
     location: "Call Center",
   },
   {
@@ -527,7 +526,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, daysUntilNextSunday + 3), 17),
       0,
     ),
-    color: "emerald",
+    color: "#67e8f9",
     location: "Adventure Park",
     allDay: true,
   },
@@ -543,7 +542,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, daysUntilNextSunday + 4), 10),
       15,
     ),
-    color: "orange",
+    color: "#67e8f9",
     location: "Marketing Room",
   },
   {
@@ -558,7 +557,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, daysUntilNextSunday + 5), 16),
       30,
     ),
-    color: "blue",
+    color: "#67e8f9",
     location: "Strategy Room",
   },
   {
@@ -573,7 +572,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, daysUntilNextSunday + 6), 7),
       30,
     ),
-    color: "rose",
+    color: "#67e8f9",
   },
   {
     id: "w3-11",
@@ -587,7 +586,7 @@ const sampleEvents: CalendarEvent[] = [
       setHours(addDays(currentDate, daysUntilNextSunday + 6), 10),
       30,
     ),
-    color: "rose",
+    color: "#67e8f9",
   },
 ];
 

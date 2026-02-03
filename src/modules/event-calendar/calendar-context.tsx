@@ -48,6 +48,13 @@ export function CalendarProvider({ children }: CalendarProviderProps) {
 
   const isColorVisible = (color: string | undefined) => {
     if (!color) return true;
+    if (color.startsWith("#")) {
+      const isPredefinedColor = visibleColors.includes(color);
+      if (!isPredefinedColor) {
+        return true;
+      }
+    }
+
     return visibleColors.includes(color);
   };
 

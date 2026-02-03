@@ -1,27 +1,65 @@
 import { isSameDay } from "date-fns";
+import type React from "react";
 
-import type { CalendarEvent, EventColor } from "../event-calendar";
+import type { CalendarEvent } from "../event-calendar";
 
 /**
- * Get CSS classes for event colors
+ * Converte hex para RGB
  */
-export function getEventColorClasses(color?: EventColor | string): string {
-  const eventColor = color || "sky";
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+    }
+    : null;
+}
 
-  switch (eventColor) {
-    case "sky":
-      return "bg-blue-200/50 hover:bg-blue-200/40 text-blue-900/90 dark:bg-blue-400/25 dark:hover:bg-blue-400/20 dark:text-blue-200 shadow-blue-700/8";
-    case "violet":
-      return "bg-violet-200/50 hover:bg-violet-200/40 text-violet-900/90 dark:bg-violet-400/25 dark:hover:bg-violet-400/20 dark:text-violet-200 shadow-violet-700/8";
-    case "rose":
-      return "bg-rose-200/50 hover:bg-rose-200/40 text-rose-900/90 dark:bg-rose-400/25 dark:hover:bg-rose-400/20 dark:text-rose-200 shadow-rose-700/8";
-    case "emerald":
-      return "bg-emerald-200/50 hover:bg-emerald-200/40 text-emerald-900/90 dark:bg-emerald-400/25 dark:hover:bg-emerald-400/20 dark:text-emerald-200 shadow-emerald-700/8";
-    case "orange":
-      return "bg-orange-200/50 hover:bg-orange-200/40 text-orange-900/90 dark:bg-orange-400/25 dark:hover:bg-orange-400/20 dark:text-orange-200 shadow-orange-700/8";
-    default:
-      return "bg-blue-200/50 hover:bg-blue-200/40 text-blue-900/90 dark:bg-blue-400/25 dark:hover:bg-blue-400/20 dark:text-blue-200 shadow-blue-700/8";
+/**
+ * Gera estilos inline para cores hex dinâmicas
+ */
+export function getEventColorStyles(color?: string): React.CSSProperties {
+  const eventColor = color || "#3b82f6";
+  const rgb = hexToRgb(eventColor);
+
+  if (!rgb) {
+    // Fallback para azul
+    return {
+      backgroundColor: "rgba(191, 219, 254, 0.5)",
+      color: "rgba(30, 58, 138, 0.9)",
+      boxShadow: "0 1px 3px 0 rgba(59, 130, 246, 0.08)",
+    };
   }
+
+  // Background com 50% de opacidade
+  const bgColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`;
+  // Texto com cor mais escura (90% de opacidade)
+  // Escurece a cor para garantir contraste
+  const textR = Math.max(0, Math.min(255, rgb.r * 0.3));
+  const textG = Math.max(0, Math.min(255, rgb.g * 0.3));
+  const textB = Math.max(0, Math.min(255, rgb.b * 0.3));
+  const textColor = `rgba(${textR}, ${textG}, ${textB}, 0.9)`;
+
+  // Shadow com 8% de opacidade
+  const shadowColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`;
+
+  const styles = {
+    backgroundColor: bgColor,
+    color: textColor,
+    boxShadow: `0 1px 3px 0 ${shadowColor}`,
+  };
+
+  return styles;
+}
+
+/**
+ * Retorna classes base para hover e dark mode
+ * As cores dinâmicas serão aplicadas via style inline
+ */
+export function getEventColorClasses(): string {
+  return "hover:opacity-90 dark:hover:opacity-80 transition-colors";
 }
 
 /**

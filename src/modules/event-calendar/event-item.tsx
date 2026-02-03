@@ -5,6 +5,7 @@ import { differenceInMinutes, format, getMinutes, isPast } from "date-fns";
 
 import {
   getBorderRadiusClasses,
+  getEventColorStyles,
   getEventColorClasses,
   type CalendarEvent,
 } from "../event-calendar";
@@ -45,21 +46,25 @@ function EventWrapper({
 }: EventWrapperProps) {
   const displayEnd = currentTime
     ? new Date(
-        new Date(currentTime).getTime() +
-          (new Date(event.end).getTime() - new Date(event.start).getTime()),
-      )
+      new Date(currentTime).getTime() +
+      (new Date(event.end).getTime() - new Date(event.start).getTime()),
+    )
     : new Date(event.end);
 
   const isEventInPast = isPast(displayEnd);
+
+  const eventColor = event.color;
+  const colorStyles = getEventColorStyles(eventColor);
 
   return (
     <button
       className={cn(
         "focus-visible:border-ring focus-visible:ring-ring/50 flex h-full w-full overflow-hidden px-1 text-left font-medium backdrop-blur-md transition outline-none select-none focus-visible:ring-[3px] data-dragging:cursor-grabbing data-dragging:shadow-lg data-past-event:line-through sm:px-2",
-        getEventColorClasses(event.color),
         getBorderRadiusClasses(isFirstDay, isLastDay),
+        getEventColorClasses(),
         className,
       )}
+      style={colorStyles}
       data-dragging={isDragging || undefined}
       data-past-event={isEventInPast || undefined}
       onClick={onClick}
@@ -115,9 +120,9 @@ export function EventItem({
   const displayEnd = useMemo(() => {
     return currentTime
       ? new Date(
-          new Date(currentTime).getTime() +
-            (new Date(event.end).getTime() - new Date(event.start).getTime()),
-        )
+        new Date(currentTime).getTime() +
+        (new Date(event.end).getTime() - new Date(event.start).getTime()),
+      )
       : new Date(event.end);
   }, [currentTime, event.start, event.end]);
 
@@ -210,13 +215,16 @@ export function EventItem({
     );
   }
 
+  const colorStyles = getEventColorStyles(eventColor);
+
   return (
     <button
       className={cn(
         "focus-visible:border-ring focus-visible:ring-ring/50 flex w-full flex-col gap-1 rounded p-2 text-left transition outline-none focus-visible:ring-[3px] data-past-event:line-through data-past-event:opacity-90",
-        getEventColorClasses(eventColor),
+        getEventColorClasses(),
         className,
       )}
+      style={colorStyles}
       data-past-event={isPast(new Date(event.end)) || undefined}
       onClick={onClick}
       onMouseDown={onMouseDown}

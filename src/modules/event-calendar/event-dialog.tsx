@@ -1,35 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import { format, isBefore } from "date-fns";
-import { CotinButton, CotinCheckbox, CotinInputAdvanced, CotinRadio, CotinText, CotinTextArea, CotinTitle } from '@cotin/biblioteca-componentes-react';
-import type { CalendarEvent, EventColor } from "../event-calendar";
+import { useEffect } from "react";
+import { isBefore } from "date-fns";
+import { CotinButton, CotinCheckbox, CotinDatePicker, CotinInputAdvanced, CotinModal, CotinText, CotinTextArea, CotinTimePicker, modelToDateStruct } from '@cotin/biblioteca-componentes-react';
+import type { CalendarEvent } from "../event-calendar";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { cn } from "./lib/utils";
-import { Button } from "../ui/button";
-import { Calendar } from "../ui/calendar";
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-} from "../ui/dialog";
-import { Label } from "../ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import {
-  StartHour,
-  EndHour,
   DefaultStartHour,
   DefaultEndHour,
 } from "../event-calendar/constants";
-import CallEndIcon from "@mui/icons-material/CallEnd";
-import z from "zod";
+import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import InputController from "../../core/shared/components/InputController";
 
@@ -41,26 +20,35 @@ interface EventDialogProps {
   onDelete: (eventId: string) => void;
 }
 
-// Função auxiliar movida para fora do componente
+const formatDateForInput = (date: Date) => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const parseDateFromInput = (dateString: string) => {
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
 const formatTimeForInput = (date: Date) => {
   const hours = date.getHours().toString().padStart(2, "0");
   const minutes = Math.floor(date.getMinutes() / 15) * 15;
   return `${hours}:${minutes.toString().padStart(2, "0")}`;
 };
 
-// Schema Zod baseado na interface CalendarEvent
 const formSchema = z.object({
   title: z.string().min(1, "Título é obrigatório"),
   description: z.string().optional(),
-  startDate: z.date(),
-  endDate: z.date(),
+  startDate: z.string().min(1, "Data de início é obrigatória"),
+  endDate: z.string().min(1, "Data de término é obrigatória"),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
   allDay: z.boolean(),
   location: z.string().optional(),
-  color: z.enum(["blue", "orange", "violet", "rose", "emerald"]),
+  color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Cor inválida")
 }).refine((data) => {
-  // Se não for allDay, valida horários
   if (!data.allDay) {
     if (!data.startTime || !data.endTime) {
       return false;
@@ -71,8 +59,9 @@ const formSchema = z.object({
   message: "Horários são obrigatórios quando não é dia inteiro",
   path: ["startTime"],
 }).refine((data) => {
-  // Valida que endDate não é antes de startDate
-  return !isBefore(data.endDate, data.startDate);
+  const startDate = parseDateFromInput(data.startDate);
+  const endDate = parseDateFromInput(data.endDate);
+  return !isBefore(endDate, startDate);
 }, {
   message: "Data de término não pode ser antes da data de início",
   path: ["endDate"],
@@ -87,21 +76,18 @@ export function EventDialog({
   onSave,
   onDelete,
 }: EventDialogProps) {
-  const [startDateOpen, setStartDateOpen] = useState(false);
-  const [endDateOpen, setEndDateOpen] = useState(false);
-
   const methods = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: formatDateForInput(new Date()),
+      endDate: formatDateForInput(new Date()),
       startTime: `${DefaultStartHour}:00`,
       endTime: `${DefaultEndHour}:00`,
       allDay: false,
       location: "",
-      color: "blue",
+      color: "#3b82f6",
     },
   });
 
@@ -115,10 +101,8 @@ export function EventDialog({
   } = methods;
 
   const allDay = watch("allDay");
-  const startDate = watch("startDate");
-  const endDate = watch("endDate");
+  const startDateString = watch("startDate");
 
-  // Atualiza o formulário quando o evento muda
   useEffect(() => {
     if (event) {
       const start = new Date(event.start);
@@ -127,48 +111,33 @@ export function EventDialog({
       reset({
         title: event.title || "",
         description: event.description || "",
-        startDate: start,
-        endDate: end,
+        startDate: formatDateForInput(start),
+        endDate: formatDateForInput(end),
         startTime: formatTimeForInput(start),
         endTime: formatTimeForInput(end),
         allDay: event.allDay ?? false,
         location: event.location || "",
-        color: (event.color as EventColor) || "blue",
+        color: event.color || "#3b82f6",
       });
     } else {
       reset({
         title: "",
         description: "",
-        startDate: new Date(),
-        endDate: new Date(),
+        startDate: formatDateForInput(new Date()),
+        endDate: formatDateForInput(new Date()),
         startTime: `${DefaultStartHour}:00`,
         endTime: `${DefaultEndHour}:00`,
         allDay: false,
         location: "",
-        color: "blue",
+        color: "#3b82f6",
       });
     }
   }, [event, reset]);
 
-  const timeOptions = useMemo(() => {
-    const options = [];
-    for (let hour = StartHour; hour <= EndHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
-        const formattedHour = hour.toString().padStart(2, "0");
-        const formattedMinute = minute.toString().padStart(2, "0");
-        const value = `${formattedHour}:${formattedMinute}`;
-        const date = new Date(2000, 0, 1, hour, minute);
-        const label = format(date, "h:mm a");
-        options.push({ value, label });
-      }
-    }
-    return options;
-  }, []);
-
   const handleSave = (data: FormData) => {
-    console.log("📝 handleSave chamado com:", data);
-    const start = new Date(data.startDate);
-    const end = new Date(data.endDate);
+
+    const start = parseDateFromInput(data.startDate);
+    const end = parseDateFromInput(data.endDate);
 
     if (!data.allDay && data.startTime && data.endTime) {
       const [startHours = 0, startMinutes = 0] = data.startTime
@@ -191,7 +160,7 @@ export function EventDialog({
       end,
       allDay: data.allDay,
       location: data.location,
-      color: data.color,
+      color: data.color || "#3b82f6",
     };
     onSave(calendarEvent);
   };
@@ -202,55 +171,40 @@ export function EventDialog({
     }
   };
 
-  const colorOptions: Array<{
-    value: EventColor;
-    label: string; // Adicionar esta propriedade
-    color: string;
-    bgClass: string;
-    borderClass: string;
-  }> = [
-      {
-        value: "blue",
-        label: "", // Adicionar
-        color: "blue",
-        bgClass: "bg-blue-400 data-[state=checked]:bg-blue-400",
-        borderClass: "border-blue-400 data-[state=checked]:border-blue-400",
-      },
-      {
-        value: "violet",
-        label: "", // Adicionar
-        color: "violet",
-        bgClass: "bg-violet-400 data-[state=checked]:bg-violet-400",
-        borderClass: "border-violet-400 data-[state=checked]:border-violet-400",
-      },
-      {
-        value: "rose",
-        label: "", // Adicionar
-        color: "#f43f5e",
-        bgClass: "bg-rose-400 data-[state=checked]:bg-rose-400",
-        borderClass: "border-rose-400 data-[state=checked]:border-rose-400",
-      },
-      {
-        value: "emerald",
-        label: "", // Adicionar
-        color: "#10b981",
-        bgClass: "bg-emerald-400 data-[state=checked]:bg-emerald-400",
-        borderClass: "border-emerald-400 data-[state=checked]:border-emerald-400",
-      },
-      {
-        value: "orange",
-        label: "", // Adicionar
-        color: "orange",
-        bgClass: "bg-orange-400 data-[state=checked]:bg-orange-400",
-        borderClass: "border-orange-400 data-[state=checked]:border-orange-400",
-      },
-    ];
-
   return (
-    <Dialog open={isOpen} onOpenChange={(open: any) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+    <CotinModal
+      id="event-dialog"
+      title={event?.id ? "Editar Evento" : "Criar Evento"}
+      open={isOpen}
+      onClose={onClose}
+      variant="default"
+      size="default"
+      showCancelButton={false}
+      showAcceptButton={false}
+      cancelButton={
+        <CotinButton variant="default" id="cancel-event" onClick={onClose}>
+          Cancelar
+        </CotinButton>
+      }
+      acceptButton={
+        <CotinButton
+          variant="primary"
+          id="save-event"
+          onClick={(e) => {
+            e.preventDefault();
+            handleSubmit(
+              (data) => {
+                handleSave(data);
+              },
+            )();
+          }}
+        >
+          Salvar
+        </CotinButton>
+      }
+      content={
         <form
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-4 min-w-0 max-w-full overflow-x-hidden overflow-y-auto px-2"
           onSubmit={handleSubmit(
             (data) => {
               console.log("✅ Formulário válido, dados:", data);
@@ -262,19 +216,12 @@ export function EventDialog({
             }
           )}
         >
-          <DialogHeader>
-            <CotinTitle
-              id="event-title"
-              level='h3'
-              children={event?.id ? "Editar Evento" : "Criar Evento"}
-            />
-            <CotinText
-              id="event-description"
-              children={event?.id ?
-                "Editar o detalhes deste evento" :
-                "Adicionar um novo evento ao seu calendário"}
-            />
-          </DialogHeader>
+          <CotinText
+            id="event-description"
+            children={event?.id ?
+              "Editar o detalhes deste evento" :
+              "Adicionar um novo evento ao seu calendário"}
+          />
 
           {errors.root && (
             <div className="bg-destructive/15 text-destructive rounded-md px-3 py-2 text-sm">
@@ -304,156 +251,64 @@ export function EventDialog({
               </InputController>
             </div>
 
-            <div className="flex gap-4">
-              <div className="flex-1 *:not-first:mt-1.5">
-                <Label htmlFor="start-date">Start Date</Label>
-                <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="start-date"
-                      variant={"outline"}
-                      className={cn(
-                        "group bg-background hover:bg-background border-input w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]",
-                        !startDate && "text-muted-foreground",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "truncate",
-                          !startDate && "text-muted-foreground",
-                        )}
-                      >
-                        {startDate ? format(startDate, "PPP") : "Pick a date"}
-                      </span>
-                      <CallEndIcon />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-2" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      defaultMonth={startDate}
-                      onSelect={(date: any) => {
-                        if (date) {
-                          setValue("startDate", date);
-                          if (isBefore(endDate, date)) {
-                            setValue("endDate", date);
-                          }
-                          setStartDateOpen(false);
+            <div className="grid grid-cols-3 gap-2">
+              <div className={allDay ? "col-span-3" : "col-span-2"}>
+                <InputController name="startDate" control={control}>
+                  <CotinDatePicker
+                    id="start-date"
+                    label="Data de Início"
+                    errorMessage={errors.startDate?.message}
+                    minDate={null}
+                    maxDate={null}
+                    onDateSelect={(dateStruct) => {
+                      const newStartDate = new Date(dateStruct.year, dateStruct.month - 1, dateStruct.day);
+                      const currentEndDateString = watch("endDate");
+                      if (currentEndDateString) {
+                        const endDateObj = parseDateFromInput(currentEndDateString);
+                        if (isBefore(endDateObj, newStartDate)) {
+                          setValue("endDate", formatDateForInput(newStartDate));
                         }
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-                {errors.startDate && (
-                  <p className="text-destructive text-sm mt-1">
-                    {errors.startDate.message}
-                  </p>
-                )}
-              </div>
-
-              {!allDay && (
-                <div className="min-w-28 *:not-first:mt-1.5">
-                  <Label htmlFor="start-time">Start Time</Label>
-                  <Controller
-                    name="startTime"
-                    control={control}
-                    render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger id="start-time">
-                          <SelectValue placeholder="Select time" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timeOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+                      }
+                    }}
                   />
-                  {errors.startTime && (
-                    <p className="text-destructive text-sm mt-1">
-                      {errors.startTime.message}
-                    </p>
-                  )}
+                </InputController>
+              </div>
+              {!allDay && (
+                <div className="col-span-1">
+                  <InputController name="startTime" control={control}>
+                    <CotinTimePicker
+                      id="start-time"
+                      label="Hora de Início"
+                      errorMessage={errors.startTime?.message}
+                    />
+                  </InputController>
                 </div>
               )}
             </div>
 
-            <div className="flex gap-4">
-              <div className="flex-1 *:not-first:mt-1.5">
-                <Label htmlFor="end-date">End Date</Label>
-                <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="end-date"
-                      variant={"outline"}
-                      className={cn(
-                        "group bg-background hover:bg-background border-input w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]",
-                        !endDate && "text-muted-foreground",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "truncate",
-                          !endDate && "text-muted-foreground",
-                        )}
-                      >
-                        {endDate ? format(endDate, "PPP") : "Pick a date"}
-                      </span>
-                      <CallEndIcon />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-2" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      defaultMonth={endDate}
-                      disabled={{ before: startDate }}
-                      onSelect={(date: any) => {
-                        if (date) {
-                          setValue("endDate", date);
-                          setEndDateOpen(false);
-                        }
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-                {errors.endDate && (
-                  <p className="text-destructive text-sm mt-1">
-                    {errors.endDate.message}
-                  </p>
-                )}
+            <div className="grid grid-cols-3 gap-2">
+
+              <div className={allDay ? "col-span-3" : "col-span-2"}>
+                <InputController name="endDate" control={control}>
+                  <CotinDatePicker
+                    id="end-date"
+                    label="Data de Término"
+                    errorMessage={errors.endDate?.message}
+                    minDate={startDateString ? modelToDateStruct(startDateString) : null}
+                    maxDate={null}
+                  />
+                </InputController>
               </div>
 
               {!allDay && (
-                <div className="min-w-28 *:not-first:mt-1.5">
-                  <Label htmlFor="end-time">End Time</Label>
-                  <Controller
-                    name="endTime"
-                    control={control}
-                    render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger id="end-time">
-                          <SelectValue placeholder="Select time" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timeOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {errors.endTime && (
-                    <p className="text-destructive text-sm mt-1">
-                      {errors.endTime.message}
-                    </p>
-                  )}
+                <div className="col-span-1">
+                  <InputController name="endTime" control={control}>
+                    <CotinTimePicker
+                      id="end-time"
+                      label="Hora de Término"
+                      errorMessage={errors.endTime?.message}
+                    />
+                  </InputController>
                 </div>
               )}
             </div>
@@ -486,59 +341,53 @@ export function EventDialog({
 
             <fieldset className="space-y-4">
               <legend className="text-foreground text-sm leading-none font-medium">
-                Etiquette
+                Etiqueta
               </legend>
-              <Controller
-                name="color"
-                control={control}
-                render={({ field }) => (
-                  <CotinRadio
-                    id="color"
-                    options={colorOptions}
-                    value={field.value}
-                    onChange={(val) => {
-                      field.onChange(val as EventColor);
-                    }}
-                    variant="color"
-                    direction="horizontal"
-                    errorMessage={errors.color?.message}
-                  />
+              <div>
+                <Controller
+                  name="color"
+                  control={control}
+                  render={({ field }) => {
+                    return (
+                      <>
+                        <input
+                          type="color"
+                          id="event-color"
+                          value={field.value || "#3b82f6"}
+                          onChange={(e) => {
+                            const newColor = e.target.value;
+                            field.onChange(newColor);
+                          }}
+                          className="p-1 h-10 w-14 block bg-background border border-input cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
+                          title="Escolha a cor do evento"
+                        />
+                      </>
+                    );
+                  }}
+                />
+                {errors.color && (
+                  <p className="text-destructive text-sm mt-1">
+                    {errors.color.message}
+                  </p>
                 )}
-              />
+              </div>
             </fieldset>
           </div>
 
-          <DialogFooter className="flex-row sm:justify-between">
-            {event?.id && (
+          {event?.id && (
+            <div className="mt-4">
               <CotinButton
                 id="delete-event"
                 variant="icon"
                 size="default"
-                onClick={handleDelete}>
+                onClick={handleDelete}
+              >
                 <DeleteIcon sx={{ color: "red" }} />
               </CotinButton>
-
-              // <Button
-              //   variant="outline"
-              //   className="text-destructive hover:text-destructive"
-              //   size="icon"
-              //   onClick={handleDelete}
-              //   aria-label="Delete event"
-              // >
-              //   <CallEndIcon />
-              // </Button>
-            )}
-            <div className="flex flex-1 justify-end gap-2">
-              <CotinButton variant="default" id="cancel-event" onClick={onClose}>
-                Cancelar
-              </CotinButton>
-              <CotinButton variant="primary" type="submit" id="save-event">
-                Salvar
-              </CotinButton>
             </div>
-          </DialogFooter>
+          )}
         </form>
-      </DialogContent>
-    </Dialog>
+      }
+    />
   );
 }
