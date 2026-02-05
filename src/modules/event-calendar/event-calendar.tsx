@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCalendarContext } from "./calendar-context";
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import {
   addDays,
   addMonths,
@@ -32,20 +34,7 @@ import {
 } from "../event-calendar";
 import { cn } from "./lib/utils";
 
-import { Button } from "../ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-
-import { SidebarTrigger, useSidebar } from "../ui/sidebar";
-
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import { CotinButton, CotinDropdownNew, CotinTitle } from '@cotin/biblioteca-componentes-react';
 
 export interface EventCalendarProps {
   events?: CalendarEvent[];
@@ -74,7 +63,13 @@ export function EventCalendar({
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null,
   );
-  const { open } = useSidebar();
+
+  const viewOptions = [
+    { value: "month", label: "Mês" },
+    { value: "week", label: "Semana" },
+    { value: "day", label: "Dia" },
+    { value: "agenda", label: "Agenda" },
+  ];
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -272,99 +267,85 @@ export function EventCalendar({
             className,
           )}
         >
-          <div className="flex sm:flex-col max-sm:items-center justify-between gap-1.5">
-            <div className="flex items-center gap-1.5">
-              <SidebarTrigger
-                data-state={open ? "invisible" : "visible"}
-                className="peer size-7 text-muted-foreground/80 hover:text-foreground/80 hover:bg-transparent! sm:-ms-1.5 lg:data-[state=invisible]:opacity-0 lg:data-[state=invisible]:pointer-events-none transition-opacity ease-in-out duration-200"
-                isOutsideSidebar
+          {/* Mês com setas ao lado */}
+          <div className="flex items-center gap-2">
+            <CotinTitle level='h4' id='view-title'>{viewTitle}</CotinTitle>
+            <div className="flex items-center gap-1">
+              <CotinButton
+                id="previous-month"
+                variant="icon"
+                size="small"
+                onClick={handlePrevious}
+                icon={
+                  <span className="text-black">
+                    <ArrowBackIosIcon sx={{ fontSize: 20 }} />
+                  </span>
+                }
               />
-              <h2 className="font-semibold text-xl lg:peer-data-[state=invisible]:-translate-x-7.5 transition-transform ease-in-out duration-300">
-                {viewTitle}
-              </h2>
+              <CotinButton
+                id="next-month"
+                variant="icon"
+                size="small"
+                onClick={handleNext}
+                icon={
+                  <span className="text-black" >
+                    <ArrowForwardIosIcon sx={{ fontSize: 20 }} />
+                  </span>
+                }
+              />
             </div>
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center sm:gap-2 max-sm:order-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="max-sm:size-8"
-                  onClick={handlePrevious}
-                  aria-label="Previous"
-                >
-                  <ArrowBackIcon />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="max-sm:size-8"
-                  onClick={handleNext}
-                  aria-label="Next"
-                >
-                  <ArrowForwardIcon />
-                </Button>
-              </div>
-              <Button
+              {/* <Button
                 className="max-sm:h-8 max-sm:px-2.5!"
                 onClick={handleToday}
               >
                 Hoje
-              </Button>
+              </Button> */}
+              <CotinButton
+                id="today"
+                variant="primary"
+                size="default"
+                onClick={handleToday}
+                text="Hoje"
+              />
             </div>
             <div className="flex items-center justify-between gap-2">
-              <Button
-                variant="outline"
-                className="max-sm:h-8 max-sm:px-2.5!"
+              <CotinButton
+                id="new-event"
+                variant="default"
+                text="Novo Evento"
                 onClick={() => {
                   setSelectedEvent(null);
                   setIsEventDialogOpen(true);
                 }}
-              >
-                Novo Evento
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="gap-1.5 max-sm:h-8 max-sm:px-2! max-sm:gap-1"
-                  >
-                    <span className="capitalize">{viewLabel}</span>
-                    <CalendarMonthIcon />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-32">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      (setView("month"), setViewLabel("Mês"));
-                    }}
-                  >
-                    Mês <DropdownMenuShortcut>M</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      (setView("week"), setViewLabel("Semana"));
-                    }}
-                  >
-                    Semana <DropdownMenuShortcut>S</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      (setView("day"), setViewLabel("Dia"));
-                    }}
-                  >
-                    Dia <DropdownMenuShortcut>D</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      (setView("agenda"), setViewLabel("Agenda"));
-                    }}
-                  >
-                    Agenda <DropdownMenuShortcut>A</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              />
+              <CotinDropdownNew
+                id="view-selector"
+                options={viewOptions}
+                placeholder={viewLabel}
+                size="default"
+                variant="simple"
+                onSelectionChange={(option) => {
+                  const viewMap: Record<string, CalendarView> = {
+                    "month": "month",
+                    "week": "week",
+                    "day": "day",
+                    "agenda": "agenda",
+                  };
+                  const labelMap: Record<string, CalendarViewLabel> = {
+                    "month": "Mês",
+                    "week": "Semana",
+                    "day": "Dia",
+                    "agenda": "Agenda",
+                  };
+                  setView(viewMap[option.value]);
+                  setViewLabel(labelMap[option.value]);
+                }}
+
+              />
+
             </div>
           </div>
         </div>
