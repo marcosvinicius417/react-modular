@@ -7,8 +7,8 @@ import {
   getBorderRadiusClasses,
   getEventColorStyles,
   getEventColorClasses,
-  type CalendarEvent,
-} from "../event-calendar";
+} from "./utils";
+import type { CalendarEvent } from "./types";
 import { cn } from "./lib/utils";
 
 const formatTimeWithOptionalMinutes = (date: Date) => {
@@ -80,7 +80,7 @@ function EventWrapper({
 
 interface EventItemProps {
   event: CalendarEvent;
-  view: "month" | "week" | "day" | "agenda";
+  view: "month" | "week" | "day";
   isDragging?: boolean;
   onClick?: (e: React.MouseEvent) => void;
   showTime?: boolean;

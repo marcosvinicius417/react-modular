@@ -1,5 +1,5 @@
-export type CalendarView = "month" | "week" | "day" | "agenda";
-export type CalendarViewLabel = "Mês" | "Semana" | "Dia" | "Agenda";
+export type CalendarView = "month" | "week" | "day";
+export type CalendarViewLabel = "Mês" | "Semana" | "Dia";
 
 export interface CalendarEvent {
   id: string;

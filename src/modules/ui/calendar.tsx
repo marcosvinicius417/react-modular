@@ -3,9 +3,9 @@ import { DayPicker } from "react-day-picker";
 
 import ArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import ArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import { CotinButton } from "@cotin/biblioteca-componentes-react";
 
 import { cn } from "../event-calendar/lib/utils";
-import { buttonVariants } from "./button";
 
 function Calendar({
   className,
@@ -21,14 +21,8 @@ function Calendar({
       "relative mx-10 mb-1 flex h-9 items-center justify-center z-20",
     caption_label: "text-sm font-medium",
     nav: "absolute top-0 flex w-full justify-between z-10",
-    button_previous: cn(
-      buttonVariants({ variant: "ghost" }),
-      "size-8 text-muted-foreground/80 hover:text-foreground p-0",
-    ),
-    button_next: cn(
-      buttonVariants({ variant: "ghost" }),
-      "size-8 text-muted-foreground/80 hover:text-foreground p-0",
-    ),
+    button_previous: "size-8 text-muted-foreground/80 hover:text-foreground p-0",
+    button_next: "size-8 text-muted-foreground/80 hover:text-foreground p-0",
     weekday: "size-8 p-0 text-xs font-medium text-muted-foreground/80",
     day_button:
       "relative flex size-8 items-center justify-center whitespace-nowrap rounded-full p-0 text-foreground group-[[data-selected]:not(.range-middle)]:[transition-property:color,background-color,border-radius,box-shadow] group-[[data-selected]:not(.range-middle)]:duration-150 group-data-disabled:pointer-events-none focus-visible:z-10 hover:not-in-data-selected:bg-accent group-data-selected:bg-primary hover:not-in-data-selected:text-foreground group-data-selected:text-primary-foreground group-data-disabled:text-foreground/30 group-data-disabled:line-through group-data-outside:text-foreground/30 group-data-selected:group-data-outside:text-primary-foreground outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] group-[.range-start:not(.range-end)]:rounded-e-full group-[.range-end:not(.range-start)]:rounded-s-full group-[.range-middle]:rounded-none group-[.range-middle]:group-data-selected:bg-accent group-[.range-middle]:group-data-selected:text-foreground",
@@ -66,10 +60,15 @@ function Calendar({
       disabled?: boolean;
       orientation?: "left" | "right" | "up" | "down";
     }) => {
-      if (props.orientation === "left") {
-        return <ArrowLeftIcon />;
-      }
-      return <ArrowRightIcon />;
+      const icon = props.orientation === "left" ? <ArrowLeftIcon /> : <ArrowRightIcon />;
+      return (
+        <CotinButton
+          variant="icon"
+          icon={icon}
+          disabled={props.disabled}
+          size="small" id={""}
+          />
+      );
     },
   };
 

@@ -11,16 +11,11 @@ import {
   startOfDay,
 } from "date-fns";
 
-import {
-  DraggableEvent,
-  DroppableCell,
-  EventItem,
-  isMultiDayEvent,
-  useCurrentTimeIndicator,
-  WeekCellsHeight,
-  type CalendarEvent,
-} from "../event-calendar";
-import { StartHour, EndHour } from "../event-calendar/constants";
+import { EventItem } from "./event-item";
+import { isMultiDayEvent } from "./utils";
+import type { CalendarEvent } from "./types";
+import { useCurrentTimeIndicator } from "./hooks/use-current-time-indicator";
+import { StartHour, EndHour, WeekCellsHeight } from "./constants";
 import { cn } from "./lib/utils";
 
 interface DayViewProps {
@@ -239,12 +234,10 @@ export function DayView({
               }}
             >
               <div className="h-full w-full">
-                <DraggableEvent
+                <EventItem
                   event={positionedEvent.event}
                   view="day"
                   onClick={(e) => handleEventClick(positionedEvent.event, e)}
-                  showTime
-                  height={positionedEvent.height}
                 />
               </div>
             </div>
@@ -273,15 +266,11 @@ export function DayView({
               >
                 {/* Quarter-hour intervals */}
                 {[0, 1, 2, 3].map((quarter) => {
-                  const quarterHourTime = hourValue + quarter * 0.25;
                   return (
-                    <DroppableCell
+                    <div
                       key={`${hour.toString()}-${quarter}`}
-                      id={`day-cell-${currentDate.toISOString()}-${quarterHourTime}`}
-                      date={currentDate}
-                      time={quarterHourTime}
                       className={cn(
-                        "absolute h-[calc(var(--week-cells-height)/4)] w-full",
+                        "absolute h-[calc(var(--week-cells-height)/4)] w-full cursor-pointer hover:bg-accent/20 transition-colors",
                         quarter === 0 && "top-0",
                         quarter === 1 &&
                           "top-[calc(var(--week-cells-height)/4)]",

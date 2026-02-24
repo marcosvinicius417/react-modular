@@ -4,8 +4,6 @@ export const EventGap = 4;
 
 export const WeekCellsHeight = 72;
 
-export const AgendaDaysToShow = 30;
-
 export const StartHour = 7;
 export const EndHour = 20;
 

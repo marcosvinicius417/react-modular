@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { isBefore } from "date-fns";
 import { CotinButton, CotinCheckbox, CotinDatePicker, CotinInputAdvanced, CotinModal, CotinText, CotinTextArea, CotinTimePicker, modelToDateStruct } from '@cotin/biblioteca-componentes-react';
-import type { CalendarEvent } from "../event-calendar";
+import type { CalendarEvent } from "./types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DeleteIcon from '@mui/icons-material/Delete';
 import {

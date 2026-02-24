@@ -16,22 +16,13 @@ import {
 
 import { ptBR } from "date-fns/locale";
 
-import {
-  addHoursToDate,
-  AgendaDaysToShow,
-  AgendaView,
-  CalendarDndProvider,
-  type CalendarEvent,
-  type CalendarView,
-  type CalendarViewLabel,
-  DayView,
-  EventDialog,
-  EventGap,
-  EventHeight,
-  MonthView,
-  WeekCellsHeight,
-  WeekView,
-} from "../event-calendar";
+import { DayView } from "./day-view";
+import { WeekView } from "./week-view";
+import { MonthView } from "./month-view";
+import { EventDialog } from "./event-dialog";
+import { EventGap, EventHeight, WeekCellsHeight } from "./constants";
+import { addHoursToDate } from "./utils";
+import type { CalendarEvent, CalendarView, CalendarViewLabel } from "./types";
 import { cn } from "./lib/utils";
 
 import { CotinButton, CotinDropdownNew, CotinTitle } from '@cotin/biblioteca-componentes-react';
@@ -68,7 +59,6 @@ export function EventCalendar({
     { value: "month", label: "Mês" },
     { value: "week", label: "Semana" },
     { value: "day", label: "Dia" },
-    { value: "agenda", label: "Agenda" },
   ];
 
   useEffect(() => {
@@ -92,9 +82,6 @@ export function EventCalendar({
         case "d":
           setView("day");
           break;
-        case "a":
-          setView("agenda");
-          break;
       }
     };
 
@@ -112,8 +99,6 @@ export function EventCalendar({
       setCurrentDate(subWeeks(currentDate, 1));
     } else if (view === "day") {
       setCurrentDate(addDays(currentDate, -1));
-    } else if (view === "agenda") {
-      setCurrentDate(addDays(currentDate, -AgendaDaysToShow));
     }
   };
 
@@ -124,8 +109,6 @@ export function EventCalendar({
       setCurrentDate(addWeeks(currentDate, 1));
     } else if (view === "day") {
       setCurrentDate(addDays(currentDate, 1));
-    } else if (view === "agenda") {
-      setCurrentDate(addDays(currentDate, AgendaDaysToShow));
     }
   };
 
@@ -200,16 +183,6 @@ export function EventCalendar({
     }
   };
 
-  const handleEventUpdate = (updatedEvent: CalendarEvent) => {
-    onEventUpdate?.(updatedEvent);
-
-    // Show toast notification when an event is updated via drag and drop
-    // toast(`Event "${updatedEvent.title}" moved`, {
-    //   description: format(new Date(updatedEvent.start), "MMM d, yyyy"),
-    //   position: "bottom-left",
-    // });
-  };
-
   const viewTitle = useMemo(() => {
     if (view === "month") {
       return format(currentDate, "MMMM yyyy", { locale: ptBR });
@@ -235,15 +208,6 @@ export function EventCalendar({
           </span>
         </>
       );
-    } else if (view === "agenda") {
-      const start = currentDate;
-      const end = addDays(currentDate, AgendaDaysToShow - 1);
-
-      if (isSameMonth(start, end)) {
-        return format(start, "MMMM yyyy", { locale: ptBR });
-      } else {
-        return `${format(start, "MMM", { locale: ptBR })} - ${format(end, "MMM yyyy", { locale: ptBR })}`;
-      }
     } else {
       return format(currentDate, "MMMM yyyy", { locale: ptBR });
     }
@@ -260,141 +224,124 @@ export function EventCalendar({
         } as React.CSSProperties
       }
     >
-      <CalendarDndProvider onEventUpdate={handleEventUpdate}>
-        <div
-          className={cn(
-            "flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-5 sm:px-4",
-            className,
-          )}
-        >
-          {/* Mês com setas ao lado */}
-          <div className="flex items-center gap-2">
-            <CotinTitle level='h4' id='view-title'>{viewTitle}</CotinTitle>
-            <div className="flex items-center gap-1">
-              <CotinButton
-                id="previous-month"
-                variant="icon"
-                size="small"
-                onClick={handlePrevious}
-                icon={
-                  <span className="text-black">
-                    <ArrowBackIosIcon sx={{ fontSize: 20 }} />
-                  </span>
-                }
-              />
-              <CotinButton
-                id="next-month"
-                variant="icon"
-                size="small"
-                onClick={handleNext}
-                icon={
-                  <span className="text-black" >
-                    <ArrowForwardIosIcon sx={{ fontSize: 20 }} />
-                  </span>
-                }
-              />
-            </div>
+      <div
+        className={cn(
+          "flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-5 sm:px-4",
+          className,
+        )}
+      >
+        {/* Mês com setas ao lado */}
+        <div className="flex items-center gap-2">
+          <CotinTitle level='h4' id='view-title'>{viewTitle}</CotinTitle>
+          <div className="flex items-center gap-1">
+            <CotinButton
+              id="previous-month"
+              variant="icon"
+              size="small"
+              onClick={handlePrevious}
+              icon={
+                <span className="text-black">
+                  <ArrowBackIosIcon sx={{ fontSize: 20 }} />
+                </span>
+              }
+            />
+            <CotinButton
+              id="next-month"
+              variant="icon"
+              size="small"
+              onClick={handleNext}
+              icon={
+                <span className="text-black" >
+                  <ArrowForwardIosIcon sx={{ fontSize: 20 }} />
+                </span>
+              }
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <CotinButton
+              id="today"
+              variant="primary"
+              size="default"
+              onClick={handleToday}
+              text="Hoje"
+            />
           </div>
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center justify-between gap-2">
-              {/* <Button
-                className="max-sm:h-8 max-sm:px-2.5!"
-                onClick={handleToday}
-              >
-                Hoje
-              </Button> */}
-              <CotinButton
-                id="today"
-                variant="primary"
-                size="default"
-                onClick={handleToday}
-                text="Hoje"
-              />
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <CotinButton
-                id="new-event"
-                variant="default"
-                text="Novo Evento"
-                onClick={() => {
-                  setSelectedEvent(null);
-                  setIsEventDialogOpen(true);
-                }}
-              />
-              <CotinDropdownNew
-                id="view-selector"
-                options={viewOptions}
-                placeholder={viewLabel}
-                size="default"
-                variant="simple"
-                onSelectionChange={(option) => {
-                  const viewMap: Record<string, CalendarView> = {
-                    "month": "month",
-                    "week": "week",
-                    "day": "day",
-                    "agenda": "agenda",
-                  };
-                  const labelMap: Record<string, CalendarViewLabel> = {
-                    "month": "Mês",
-                    "week": "Semana",
-                    "day": "Dia",
-                    "agenda": "Agenda",
-                  };
-                  setView(viewMap[option.value]);
-                  setViewLabel(labelMap[option.value]);
-                }}
+            <CotinButton
+              id="new-event"
+              variant="default"
+              text="Novo Evento"
+              onClick={() => {
+                setSelectedEvent(null);
+                setIsEventDialogOpen(true);
+              }}
+            />
+            <CotinDropdownNew
+              id="view-selector"
+              options={viewOptions}
+              placeholder={viewLabel}
+              size="large"
+              variant="simple"
+              onSelectionChange={(option) => {
+                const viewMap: Record<string, CalendarView> = {
+                  "month": "month",
+                  "week": "week",
+                  "day": "day",
+                };
+                const labelMap: Record<string, CalendarViewLabel> = {
+                  "month": "Mês",
+                  "week": "Semana",
+                  "day": "Dia",
+                };
+                setView(viewMap[option.value]);
+                setViewLabel(labelMap[option.value]);
+              }}
 
-              />
+            />
 
-            </div>
           </div>
         </div>
+      </div>
 
-        <div className="flex flex-1 flex-col">
-          {view === "month" && (
-            <MonthView
-              currentDate={currentDate}
-              events={events}
-              onEventSelect={handleEventSelect}
-              onEventCreate={handleEventCreate}
-            />
-          )}
-          {view === "week" && (
-            <WeekView
-              currentDate={currentDate}
-              events={events}
-              onEventSelect={handleEventSelect}
-              onEventCreate={handleEventCreate}
-            />
-          )}
-          {view === "day" && (
-            <DayView
-              currentDate={currentDate}
-              events={events}
-              onEventSelect={handleEventSelect}
-              onEventCreate={handleEventCreate}
-            />
-          )}
-          {view === "agenda" && (
-            <AgendaView
-              currentDate={currentDate}
-              events={events}
-              onEventSelect={handleEventSelect}
-            />
-          )}
-        </div>
+      <div className="flex flex-1 flex-col">
+        {view === "month" && (
+          <MonthView
+            currentDate={currentDate}
+            events={events}
+            onEventSelect={handleEventSelect}
+            onEventCreate={handleEventCreate}
+          />
+        )}
+        {view === "week" && (
+          <WeekView
+            currentDate={currentDate}
+            events={events}
+            onEventSelect={handleEventSelect}
+            onEventCreate={handleEventCreate}
+          />
+        )}
+        {view === "day" && (
+          <DayView
+            currentDate={currentDate}
+            events={events}
+            onEventSelect={handleEventSelect}
+            onEventCreate={handleEventCreate}
+          />
+        )}
+      </div>
 
-        <EventDialog
-          event={selectedEvent}
-          isOpen={isEventDialogOpen}
-          onClose={() => {
-            setIsEventDialogOpen(false);
-            setSelectedEvent(null);
-          }}
-          onSave={handleEventSave}
-          onDelete={handleEventDelete}
-        />
-      </CalendarDndProvider>
+      <EventDialog
+        event={selectedEvent}
+        isOpen={isEventDialogOpen}
+        onClose={() => {
+          setIsEventDialogOpen(false);
+          setSelectedEvent(null);
+        }}
+        onSave={handleEventSave}
+        onDelete={handleEventDelete}
+      />
     </div>
   );
 }
